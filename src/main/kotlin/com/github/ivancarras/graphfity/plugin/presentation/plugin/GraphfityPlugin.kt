@@ -1,6 +1,5 @@
-package com.github.ivancarras.graphfity.plugin.main
+package com.github.ivancarras.graphfity.plugin.presentation.plugin
 
-import com.github.ivancarras.graphfity.plugin.task.GraphfityTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 

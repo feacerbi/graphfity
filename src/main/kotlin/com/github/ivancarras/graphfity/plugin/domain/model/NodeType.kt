@@ -1,4 +1,4 @@
-package com.github.ivancarras.graphfity.plugin.model
+package com.github.ivancarras.graphfity.plugin.domain.model
 
 data class NodeType(
     val name: String,

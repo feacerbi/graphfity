@@ -1,5 +1,5 @@
 group = "com.github.ivancarras"
-version = "1.0.0"
+version = "1.0.1"
 
 plugins {
     id("java")
@@ -26,7 +26,7 @@ gradlePlugin {
             displayName = "Graphfity Plugin"
             description =
                 "Graphfity creates a dependency node graph about your internal modules dependencies, helping you to analise and optimize the internal dependencies between your project modules, generating a png image about your project which is specially useful if you are developing a multi-module application"
-            implementationClass = "com.github.ivancarras.graphfity.plugin.main.GraphfityPlugin"
+            implementationClass = "com.github.ivancarras.graphfity.plugin.presentation.plugin.GraphfityPlugin"
         }
     }
 }
@@ -46,7 +46,7 @@ publishing {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.21")
-    implementation("org.codehaus.groovy:groovy-all:3.0.8")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
+    implementation("org.codehaus.groovy:groovy-all:3.0.10")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
 }

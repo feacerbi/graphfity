@@ -1,4 +1,4 @@
-package com.github.ivancarras.graphfity.plugin.main
+package com.github.ivancarras.graphfity.plugin.presentation.plugin
 
 import org.gradle.api.provider.Property
 

@@ -1,8 +1,8 @@
-package com.github.ivancarras.graphfity.plugin.task
+package com.github.ivancarras.graphfity.plugin.presentation.plugin
 
-import com.github.ivancarras.graphfity.plugin.model.NodeData
-import com.github.ivancarras.graphfity.plugin.model.NodeType
+import com.github.ivancarras.graphfity.plugin.domain.model.*
 import groovy.json.JsonSlurper
+import org.apache.log4j.Logger
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ProjectDependency
@@ -28,6 +28,7 @@ abstract class GraphfityTask : DefaultTask() {
         val nodeTypes = loadNodeTypes(nodeTypesPath)
         val dotPath = graphImagePath.get()
         val projectRootName = projectRootName.get()
+
         val rootProject = getRootProject(projectRootName)
         val nodes = HashSet<NodeData>()
         val dependencies = HashSet<Pair<NodeData, NodeData>>()
@@ -39,6 +40,7 @@ abstract class GraphfityTask : DefaultTask() {
         addDependenciesToFile(dotFile, dependencies)
         addNodeLevelsToFile(dotFile, nodesLevel)
         generateGraph(dotFile)
+        testingGraphVisitor()
     }
 
     private fun getRootProject(projectRootName: String): Project {
@@ -84,6 +86,25 @@ abstract class GraphfityTask : DefaultTask() {
                     println("Project module dependency graph created at ${dotFile.path}.png")
                 }
             }
+    }
+
+    private fun testingGraphVisitor(){
+        val graph = AdjacencyListGraph<String>().apply {
+            this.addDirectedEdge(Vertex(0,"App"), Vertex(1,"Feature:a"))
+            this.addDirectedEdge(Vertex(2,"App"),Vertex(3,"Feature:b"))
+            this.addDirectedEdge(Vertex(4,"App"),Vertex(5,"Feature:c"))
+            this.addDirectedEdge(Vertex(5,"App"),Vertex(6,"Core"))
+            this.addDirectedEdge(Vertex(7, "Feature:c"),Vertex(8,"Library:a"))
+            this.addDirectedEdge(Vertex(9, "Feature:c"),Vertex(10,"Library:b"))
+            this.addDirectedEdge(Vertex(11, "Feature:d"),Vertex(12,"Library:c"))
+            this.addDirectedEdge(Vertex(13, "\"Library:c"),Vertex(14,"Library-level2"))
+        }
+        val graphVisitor = GraphVisitor(graph)
+
+        graphVisitor.breadthFirstSearch(Vertex(0,"App")).forEach {
+            val logger = Logger.getLogger("")
+            logger.info(it.data+" - ")
+        }
     }
 
     private fun obtainDependenciesData(
