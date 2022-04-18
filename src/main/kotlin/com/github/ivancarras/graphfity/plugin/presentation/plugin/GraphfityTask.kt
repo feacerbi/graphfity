@@ -2,7 +2,6 @@ package com.github.ivancarras.graphfity.plugin.presentation.plugin
 
 import com.github.ivancarras.graphfity.plugin.domain.model.*
 import groovy.json.JsonSlurper
-import org.apache.log4j.Logger
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ProjectDependency
@@ -21,26 +20,26 @@ abstract class GraphfityTask : DefaultTask() {
     @Input
     val projectRootName: Property<String> = project.objects.property(String::class.java)
 
+
     @TaskAction
     fun graphfity() {
 
         val nodeTypesPath = nodeTypesPath.get()
         val nodeTypes = loadNodeTypes(nodeTypesPath)
-        val dotPath = graphImagePath.get()
         val projectRootName = projectRootName.get()
 
         val rootProject = getRootProject(projectRootName)
         val nodes = HashSet<NodeData>()
         val dependencies = HashSet<Pair<NodeData, NodeData>>()
-        val nodesLevel = HashMap<String, Int>()
-        val dotFile = createDotFile(dotPath)
+        val graph = AdjacencyListGraph<String>()
 
-        obtainDependenciesData(rootProject, nodes, dependencies, nodeTypes, nodesLevel)
-        addNodesToFile(dotFile, nodes)
-        addDependenciesToFile(dotFile, dependencies)
-        addNodeLevelsToFile(dotFile, nodesLevel)
-        generateGraph(dotFile)
-        testingGraphVisitor()
+        obtainDependenciesData(rootProject, nodes, dependencies, nodeTypes,graph)
+
+      //  addDependenciesToFile(dotFile, dependencies)
+       // generateGraph(dotFile)
+
+        //new
+        testingGraphVisitor(graph)
     }
 
     private fun getRootProject(projectRootName: String): Project {
@@ -88,22 +87,10 @@ abstract class GraphfityTask : DefaultTask() {
             }
     }
 
-    private fun testingGraphVisitor(){
-        val graph = AdjacencyListGraph<String>().apply {
-            this.addDirectedEdge(Vertex(0,"App"), Vertex(1,"Feature:a"))
-            this.addDirectedEdge(Vertex(2,"App"),Vertex(3,"Feature:b"))
-            this.addDirectedEdge(Vertex(4,"App"),Vertex(5,"Feature:c"))
-            this.addDirectedEdge(Vertex(5,"App"),Vertex(6,"Core"))
-            this.addDirectedEdge(Vertex(7, "Feature:c"),Vertex(8,"Library:a"))
-            this.addDirectedEdge(Vertex(9, "Feature:c"),Vertex(10,"Library:b"))
-            this.addDirectedEdge(Vertex(11, "Feature:d"),Vertex(12,"Library:c"))
-            this.addDirectedEdge(Vertex(13, "\"Library:c"),Vertex(14,"Library-level2"))
-        }
+    private fun testingGraphVisitor(graph: Graph<String>){
         val graphVisitor = GraphVisitor(graph)
-
-        graphVisitor.breadthFirstSearch(Vertex(0,"App")).forEach {
-            val logger = Logger.getLogger("")
-            logger.info(it.data+" - ")
+        graphVisitor.breadthFirstSearch(Vertex(":app")).forEach {
+            print(it.data +" - ")
         }
     }
 
@@ -112,18 +99,12 @@ abstract class GraphfityTask : DefaultTask() {
         projects: HashSet<NodeData>,
         dependencies: HashSet<Pair<NodeData, NodeData>>,
         nodeTypes: List<NodeType>,
-        nodesLevel: HashMap<String, Int>,
-        level: Int = 0
+        graph: Graph<String>
     ) {
         val projectNodeData = mapProjectToNode(project, nodeTypes)
 
         if (projectNodeData != null && projectNodeData.nodeType.isEnabled) {
             projects.add(projectNodeData)
-
-            val nodeLevel = nodesLevel[project.path]
-            if (nodeLevel == null || level > nodeLevel) {
-                nodesLevel[projectNodeData.path] = level
-            }
         }
 
         project.configurations.forEach { config ->
@@ -137,45 +118,17 @@ abstract class GraphfityTask : DefaultTask() {
                         dependencyProjectNodeData.nodeType.isEnabled
                     ) {
                         projects.add(dependencyProjectNodeData)
-
-                        val nodeLevel = nodesLevel[dependencyProjectNodeData.path]
-                        if (nodeLevel == null || level > nodeLevel) {
-                            nodesLevel[dependencyProjectNodeData.path] = level + 1
-                        }
                         dependencies.add(Pair(projectNodeData, dependencyProjectNodeData))
+                        graph.addDirectedEdge(Vertex(projectNodeData.path), Vertex(dependencyProjectNodeData.path))
                         obtainDependenciesData(
                             dependencyProject,
                             projects,
                             dependencies,
                             nodeTypes,
-                            nodesLevel,
-                            level + 1
+                            graph
                         )
                     }
                 }
-        }
-    }
-
-    private fun createDotFile(dotPath: String): File = File(dotPath + DOT_FILE).apply {
-        delete()
-        parentFile.mkdirs()
-        appendText(
-            "digraph {\n" +
-                    "  graph [ranksep=1.2];\n" +
-                    "  rankdir=TB; splines=true;\n"
-        )
-    }
-
-    private fun addNodeToFile(dotFile: File, nodeData: NodeData) {
-        if (nodeData.nodeType.isEnabled) {
-            dotFile.appendText("node [style=filled, shape = ${nodeData.nodeType.shape} fillcolor=\"${nodeData.nodeType.fillColor}\"];\n")
-            dotFile.appendText("\"${nodeData.path}\"\n")
-        }
-    }
-
-    private fun addNodesToFile(dotFile: File, nodes: HashSet<NodeData>) {
-        nodes.forEach { node ->
-            addNodeToFile(dotFile, node)
         }
     }
 
@@ -187,30 +140,6 @@ abstract class GraphfityTask : DefaultTask() {
                 path = project.path, nodeType = nodeType
             )
         }
-
-    private fun addDependenciesToFile(
-        dotFile: File,
-        dependencies: HashSet<Pair<NodeData, NodeData>>
-    ) {
-        dependencies.forEach { dependency ->
-            if (dependency.first.nodeType.isEnabled && dependency.second.nodeType.isEnabled) {
-                dotFile.appendText("  \"${dependency.first.path}\" -> \"${dependency.second.path}\"\n")
-            }
-        }
-    }
-
-    private fun addNodeLevelsToFile(
-        dotFile: File, nodeLevels: HashMap<String, Int>
-    ) {
-        nodeLevels.asSequence().groupBy({ it.value }, { it.key }).forEach {
-            dotFile.appendText("\n{ rank=same;")
-            it.value.forEach { value ->
-                dotFile.appendText(" \"$value\";")
-            }
-            dotFile.appendText("}\n")
-        }
-        dotFile.appendText("}\n")
-    }
 
     companion object {
         private const val DOT_FILE = "project.dot"

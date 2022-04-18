@@ -9,14 +9,15 @@ class GraphVisitor<T>(private val graph: Graph<T>) {
         val queued: Queue<Vertex<T>> = LinkedList()
         val visited = arrayListOf<Vertex<T>>()
         queued.add(source)
-        visited.add(source)
 
         while (queued.isNotEmpty()){
             val vertex = queued.poll()
+            visited.add(vertex)
             val neighborsEdges = graph.edges(vertex)
-            neighborsEdges.forEach {
-                if(visited.notContains(it.destination)){
-                    queued.add(it.destination)
+            neighborsEdges.forEach { neighborEdge->
+                if(visited.notContains(neighborEdge.destination) &&
+                    queued.toList().notContains(neighborEdge.destination)){
+                    queued.add(neighborEdge.destination)
                 }
             }
         }
