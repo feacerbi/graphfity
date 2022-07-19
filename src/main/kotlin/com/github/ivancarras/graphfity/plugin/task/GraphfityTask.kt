@@ -1,8 +1,10 @@
 package com.github.ivancarras.graphfity.plugin.task
 
+import com.android.build.gradle.BaseExtension
 import com.github.ivancarras.graphfity.plugin.model.NodeData
 import com.github.ivancarras.graphfity.plugin.model.NodeType
 import groovy.json.JsonSlurper
+import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ProjectDependency
@@ -10,6 +12,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import java.util.logging.Logger
 
 abstract class GraphfityTask : DefaultTask() {
     @Input
@@ -111,6 +114,12 @@ abstract class GraphfityTask : DefaultTask() {
                 .map { it.dependencyProject }
                 .filterNot { project == it.project }
                 .forEach { dependencyProject ->
+
+                    println("Project name: ${dependencyProject.name}")
+                    println("Project depth: ${dependencyProject.depth}")
+                    println("Project isAndroid: ${project.extensions.findByType(BaseExtension::class.java) != null}")
+                    println("Current level: $level")
+
                     val dependencyProjectNodeData = mapProjectToNode(dependencyProject, nodeTypes)
                     if (dependencyProjectNodeData != null && projectNodeData != null &&
                         dependencyProjectNodeData.nodeType.isEnabled

@@ -11,6 +11,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    google()
 }
 
 pluginBundle {
@@ -47,6 +48,7 @@ publishing {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.21")
     implementation("org.codehaus.groovy:groovy-all:3.0.8")
+    implementation("com.android.tools.build:gradle:7.2.1")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
 }
